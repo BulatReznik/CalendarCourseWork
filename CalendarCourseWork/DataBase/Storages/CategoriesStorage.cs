@@ -12,24 +12,36 @@ namespace CalendarCourseWork.DataBase.Storages
             _context = context;
         }
 
-        public async Task<List<Category>> GetCategoriesAsync()
+        public async Task<List<Category>> GetCategoriesAsync(int userId)
         {
             if (_context.Category == null)
             {
                 return new List<Category>();
             }
 
-            return await _context.Category.ToListAsync();
+            List<Category> userCategories = await _context.Category
+                .Where(category => category.UserId == userId)
+                .ToListAsync();
+
+            return userCategories;
         }
 
-        public async Task<Category> GetCategoryByIdAsync(int id)
+        public async Task<Category> GetCategoryByIdAsync(int id, int userId)
         {
             if (_context.Category == null)
             {
                 return null;
             }
 
-            return await _context.Category.FindAsync(id);
+            Category category = await _context.Category.FindAsync(id);
+
+            // Проверяем, принадлежит ли категория указанному пользователю
+            if (category != null && category.UserId == userId)
+            {
+                return category;
+            }
+
+            return null; // Категория не найдена или не принадлежит указанному пользователю
         }
 
         public async Task<bool> UpdateCategoryAsync(int id, Category category)
@@ -49,7 +61,6 @@ namespace CalendarCourseWork.DataBase.Storages
         {
             if (_context.Category == null)
             {
-                // Handle the case where the entity set is null
                 return null;
             }
 
@@ -59,28 +70,36 @@ namespace CalendarCourseWork.DataBase.Storages
             return category;
         }
 
-        public async Task<bool> DeleteCategoryAsync(int id)
+        public async Task<bool> DeleteCategoryAsync(int id, int userId)
         {
             if (_context.Category == null)
             {
                 return false;
             }
 
-            var category = await _context.Category.FindAsync(id);
+            // Проверяем, существует ли категория с данным id
+            Category category = await _context.Category.FindAsync(id);
             if (category == null)
             {
-                return false;
+                return false; // Категория не найдена
             }
 
+            // Проверяем, имеет ли пользователь доступ к данной категории
+            if (category.UserId != userId)
+            {
+                return false; // У пользователя нет доступа к этой категории
+            }
+
+            // Удаляем категорию и сохраняем изменения
             _context.Category.Remove(category);
             await _context.SaveChangesAsync();
 
-            return true;
+            return true; // Категория успешно удалена
         }
 
-        public bool CategoryExists(int id)
+        public bool CategoryExists(int userId, string header)
         {
-            return (_context.Category?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Category?.Any(e => e.UserId == userId && e.Header == header)).GetValueOrDefault();
         }
     }
 }

@@ -1,4 +1,7 @@
 ﻿using CalendarCourseWork.DataBase.Models;
+using CalendarCourseWork.Logic;
+using CalendarCourseWork.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CalendarCourseWork.Controllers
@@ -8,22 +11,33 @@ namespace CalendarCourseWork.Controllers
     public class EventsController : ControllerBase
     {
         private readonly EventsLogic _eventsLogic;
+        private readonly UsersLogic _usersLogic;
+        private readonly JWTUser _jwtUser;
 
-        public EventsController(EventsLogic eventsLogic)
+        public EventsController(EventsLogic eventsLogic, UsersLogic usersLogic, JWTUser jwtUser)
         {
             _eventsLogic = eventsLogic;
+            _usersLogic = usersLogic;
+            _jwtUser = jwtUser;
         }
 
+        [Authorize]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Event>>> GetEvent()
+        public async Task<ActionResult<IEnumerable<Event>>> GetEvent(DateTime dateTimeFrom, DateTime dataTimeTo)
         {
-            return await _eventsLogic.GetEventsAsync();
+            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+            int userId = user.Id;
+
+            return await _eventsLogic.GetEventsAsync(userId, dateTimeFrom, dataTimeTo);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Event>> GetEvent(int id)
         {
-            Event @event = await _eventsLogic.GetEventByIdAsync(id);
+            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+            int userId = user.Id;
+
+            Event @event = await _eventsLogic.GetEventByIdAsync(id, userId);
 
             if (@event == null)
             {
@@ -36,7 +50,12 @@ namespace CalendarCourseWork.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEvent(int id, Event @event)
         {
-            bool result = await _eventsLogic.UpdateEventAsync(id, @event);
+
+            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+
+            int userId = user.Id;
+
+            bool result = await _eventsLogic.UpdateEventAsync(id, userId, @event);
 
             if (!result)
             {
@@ -49,6 +68,7 @@ namespace CalendarCourseWork.Controllers
         [HttpPost]
         public async Task<ActionResult<Event>> PostEvent(Event @event)
         {
+
             Event result = await _eventsLogic.CreateEventAsync(@event);
 
             if (result == null)
@@ -60,9 +80,9 @@ namespace CalendarCourseWork.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEvent(int id)
+        public async Task<IActionResult> DeleteEvent(int id, int userId)
         {
-            bool result = await _eventsLogic.DeleteEventAsync(id);
+            bool result = await _eventsLogic.DeleteEventAsync(id, userId);
 
             if (!result)
             {

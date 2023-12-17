@@ -9,6 +9,7 @@ using CalendarCourseWork.DataBase;
 using Microsoft.EntityFrameworkCore;
 using CalendarCourseWork.Logic;
 using CalendarCourseWork.DataBase.Storages;
+using CalendarCourseWork.DataBase.Models;
 
 namespace CalendarCourseWork
 {
@@ -24,10 +25,16 @@ namespace CalendarCourseWork
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<JWTUser>();
-            services.AddTransient<UserLogic>();
+            services.AddTransient<UsersLogic>();
+            services.AddTransient<UsersStorage>();
 
             services.AddTransient<CategoriesLogic>();
             services.AddTransient<CategoriesStorage>();
+
+            services.AddTransient<EventsStorage>();
+            services.AddTransient<EventsLogic>();
+
+            services.AddTransient<JWTUser>();
 
             services.AddDbContext<CalendarCourseWorkContext>(options =>
              options.UseSqlServer(Configuration.GetConnectionString("CalendarCourseWorkContext") ??
@@ -36,6 +43,8 @@ namespace CalendarCourseWork
             services.AddControllers().AddNewtonsoftJson();
 
             services.AddDistributedMemoryCache();
+
+            services.AddControllersWithViews();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
@@ -121,7 +130,9 @@ namespace CalendarCourseWork
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }

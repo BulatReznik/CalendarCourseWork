@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CalendarCourseWork.Migrations
 {
     [DbContext(typeof(CalendarCourseWorkContext))]
-    [Migration("20231126102500_2")]
-    partial class _2
+    [Migration("20231217114442_8")]
+    partial class _8
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -24,7 +24,7 @@ namespace CalendarCourseWork.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
-            modelBuilder.Entity("CalendarCourseWork.Data.Models.Category", b =>
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -39,12 +39,17 @@ namespace CalendarCourseWork.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Category");
                 });
 
-            modelBuilder.Entity("CalendarCourseWork.Data.Models.Event", b =>
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.Event", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,19 +71,14 @@ namespace CalendarCourseWork.Migrations
                     b.Property<DateTime>("EventTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Event");
                 });
 
-            modelBuilder.Entity("CalendarCourseWork.Data.Models.User", b =>
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -88,7 +88,7 @@ namespace CalendarCourseWork.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -100,31 +100,40 @@ namespace CalendarCourseWork.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("User");
                 });
 
-            modelBuilder.Entity("CalendarCourseWork.Data.Models.Event", b =>
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.Category", b =>
                 {
-                    b.HasOne("CalendarCourseWork.Data.Models.Category", "Category")
-                        .WithMany()
+                    b.HasOne("CalendarCourseWork.DataBase.Models.User", null)
+                        .WithMany("Categories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.Event", b =>
+                {
+                    b.HasOne("CalendarCourseWork.DataBase.Models.Category", "Category")
+                        .WithMany("Events")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CalendarCourseWork.Data.Models.User", "User")
-                        .WithMany("Events")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Category");
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("CalendarCourseWork.Data.Models.User", b =>
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.Category", b =>
                 {
                     b.Navigation("Events");
+                });
+
+            modelBuilder.Entity("CalendarCourseWork.DataBase.Models.User", b =>
+                {
+                    b.Navigation("Categories");
                 });
 #pragma warning restore 612, 618
         }

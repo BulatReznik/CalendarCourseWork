@@ -1,22 +1,24 @@
 ﻿using CalendarCourseWork.DataBase.Models;
 using CalendarCourseWork.Logic;
+using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
 using System.Security.Claims;
-
+using System.Threading.Tasks;
 
 namespace CalendarCourseWork.Security
 {
     public class JWTUser
     {
-        private readonly UserLogic _userLogic;
+        private readonly UsersLogic _userLogic;
 
-        public JWTUser(UserLogic logic)
+        public JWTUser(UsersLogic logic)
         {
             _userLogic = logic;
         }
 
-        public ClaimsIdentity GetIdentity(User model)
+        public async Task<ClaimsIdentity> GetIdentityAsync(User model)
         {
-            User user = _userLogic.ReadElement(new User
+            User user = await _userLogic.ReadElement(new User
             {
                 Email = model.Email,
                 Password = string.IsNullOrEmpty(model.Password) ? " " : model.Password
@@ -24,10 +26,12 @@ namespace CalendarCourseWork.Security
 
             if (user != null)
             {
-                var claims = new List<Claim>
+                List<Claim> claims = new()
                 {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Email)
+                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Email),
+                    new Claim("Id", user.Id.ToString()) // Добавляем Claim с типом "Id"
                 };
+
                 ClaimsIdentity claimsIdentity = new(claims, "Token", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
                 return claimsIdentity;
             }
@@ -36,12 +40,14 @@ namespace CalendarCourseWork.Security
             return null;
         }
 
-        public User GetUser(ClaimsIdentity identity)
+        public async Task<User> GetUser(ClaimsIdentity identity)
         {
             if (identity != null)
             {
-                string? email = identity.Name;
-                return _userLogic.ReadElement(new User { Email = email });
+                Claim? idClaim = identity.FindFirst("Id");
+                int id = idClaim != null ? Convert.ToInt32(idClaim.Value) : 0;
+
+                return await _userLogic.ReadElement(new User { Id = id });
             }
             return null;
         }
