@@ -1,0 +1,55 @@
+﻿@page
+
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: -webkit-gradient(linear, left bottom, right top, from(#fc2c77), to(#6c4079));
+            background: -webkit-linear-gradient(bottom left, #fc2c77 0%, #6c4079 100%);
+            background: -moz-linear-gradient(bottom left, #fc2c77 0%, #6c4079 100%);
+            background: -o-linear-gradient(bottom left, #fc2c77 0%, #6c4079 100%);
+            background: linear-gradient(to top right, #fc2c77 0%, #6c4079 100%);
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn--blue {
+            background-color: #4e8bff;
+            color: #fff;
+        }
+
+            .btn--blue:hover {
+                background-color: #428bff;
+            }
+
+        .error-message {
+            color: #ff0000;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-wrapper p-t-70 p-b-100 font-robo">
+        <div class="wrapper wrapper--w680">
+            <div class="card card-4">
+                <div class="card-body">
+                    <h1 class="title text-center">Пользователь не был найден!</h1>
+                    <p class="text-center"><a href="/users/login" class="btn btn-primary">Вернуться к входу</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>

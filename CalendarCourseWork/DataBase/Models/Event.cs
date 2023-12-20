@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace CalendarCourseWork.DataBase.Models
+namespace CalendarCourseWork.BusinessLogic.Models
 {
     public class Event
     {

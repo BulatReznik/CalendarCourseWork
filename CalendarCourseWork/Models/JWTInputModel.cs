@@ -1,4 +1,4 @@
-﻿using CalendarCourseWork.DataBase.Models;
+﻿using CalendarCourseWork.BusinessLogic.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CalendarCourseWork.Models

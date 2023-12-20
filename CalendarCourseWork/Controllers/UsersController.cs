@@ -1,105 +1,146 @@
-﻿using CalendarCourseWork.DataBase.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using CalendarCourseWork.BusinessLogic.Models;
 using CalendarCourseWork.Logic;
-using CalendarCourseWork.Models;
 using CalendarCourseWork.Security;
+using CalendarCourseWork.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CalendarCourseWork.Controllers
 {
-    [Route("api/[controller]/[action]")]
-    [ApiController]
     public class UsersController : Controller
     {
-        private readonly UsersLogic _usersLogic;
+
+        private readonly UsersManager _usersLogic;
         private readonly JWTUser _jwtUser;
 
-        public UsersController(UsersLogic usersLogic, JWTUser jwtUser)
+        public UsersController(UsersManager usersLogic, JWTUser jwtUser)
         {
             _usersLogic = usersLogic;
             _jwtUser = jwtUser;
         }
 
-        [HttpGet]
-        public IActionResult Registration()
+        // GET: Users/Create
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        // POST: Users/Create
+        [HttpPost]
+        public async Task<IActionResult> Register(UserInputModel userInputModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Если модель не валидна, вернуть представление с ошибками валидации
+                return View(userInputModel);
+            }
+
+            User user = new()
+            {
+                Name = userInputModel.Name,
+                Email = userInputModel.Email,
+                Password = userInputModel.Password,
+            };
+
+            User result = await _usersLogic.CreateUserAsync(user);
+
+            return RedirectToAction(nameof(Login));
+        }
+
+        // GET: Users/Edit/5
+        public async Task<IActionResult> Edit()
+        {
+            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+            int userId = user.Id;
+
+            if (userId == 0)
+            {
+                return NotFound();
+            }
+
+            User userInfo = await _usersLogic.GetUserByIdAsync(userId);
+
+            if (userInfo == null)
+            {
+                return NotFound();
+            }
+
+            // Создаем объект UserInputModel и заполняем его данными из базы
+            UserInputModel userInputModel = new()
+            {
+                Name = userInfo.Name,
+                Email = userInfo.Email,
+                Password = userInfo.Password,
+            };
+
+            return View(userInputModel);
+        }
+
+        // POST: Users/Edit/5
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(UserInputModel userInputModel)
+        {
+            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+            int userId = user.Id;
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Обновляем данные пользователя
+                    await _usersLogic.UpdateUserAsync(userId, userInputModel);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_usersLogic.UserExists(user.Email))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(userInputModel);
+        }
+
+        public IActionResult Login()
         {
             return View();
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostUser(UserInputModel userInputModel)
+        public async Task<IActionResult> Login(JWTInputModel userInputModel)
         {
-            try
+            User user = new()
             {
-                User user = new()
-                {
-                    Name = userInputModel.Name,
-                    Email = userInputModel.Email,
-                    Password = userInputModel.Password,
-                };
+                Email = userInputModel.Email,
+                Password = userInputModel.Password,
+            };
 
-                User result = await _usersLogic.CreateUserAsync(user);
+            ClaimsIdentity identity = await _jwtUser.GetIdentityAsync(user);
 
-                if (result == null)
-                {
-                    return Problem("Email уже занят или не все данные были введены");
-                }
-
-                return CreatedAtAction("GetUser", new { id = result.Id }, result);
-            }
-            catch (Exception ex)
+            if (identity != null)
             {
-                return StatusCode(500, ex.Message);
+                Claim? userIdClaim = identity.FindFirst("Id");
+                int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+                // Перенаправление на страницу
+                return RedirectToAction("MonthWithEvents", "Calendar", new { year = DateTime.Now.Year, month = DateTime.Now.Month, userId = userId });
             }
+
+            return RedirectToAction("UserWas");
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUser()
+        public IActionResult UserWas()
         {
-            return await _usersLogic.GetUsersAsync();
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
-        {
-            User user = await _usersLogic.GetUserByIdAsync(id);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return user;
-        }
-
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(UserInputModel userInputModel)
-        {
-            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
-            int userId = user.Id;
-
-            bool result = await _usersLogic.UpdateUserAsync(userId, userInputModel);
-
-            if (!result)
-            {
-                return BadRequest();
-            }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            bool result = await _usersLogic.DeleteUserAsync(id);
-
-            if (!result)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            return View();
         }
     }
 }

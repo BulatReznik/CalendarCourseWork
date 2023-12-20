@@ -1,4 +1,4 @@
-﻿using CalendarCourseWork.DataBase.Models;
+﻿using CalendarCourseWork.BusinessLogic.Models;
 using CalendarCourseWork.Logic;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
@@ -9,9 +9,9 @@ namespace CalendarCourseWork.Security
 {
     public class JWTUser
     {
-        private readonly UsersLogic _userLogic;
+        private readonly UsersManager _userLogic;
 
-        public JWTUser(UsersLogic logic)
+        public JWTUser(UsersManager logic)
         {
             _userLogic = logic;
         }

@@ -5,17 +5,20 @@ using NLog.Config;
 using NLog.Targets;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using CalendarCourseWork.DataBase;
+using CalendarCourseWork.BusinessLogic;
 using Microsoft.EntityFrameworkCore;
 using CalendarCourseWork.Logic;
-using CalendarCourseWork.DataBase.Storages;
-using CalendarCourseWork.DataBase.Models;
+using CalendarCourseWork.BusinessLogic.Storages;
+using CalendarCourseWork.BusinessLogic.Models;
+using Hangfire;
+using Hangfire.SqlServer;
+using System.Configuration;
 
 namespace CalendarCourseWork
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration) 
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -24,15 +27,19 @@ namespace CalendarCourseWork
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHangfire(x => x.UseSqlServerStorage(Configuration.GetConnectionString("CalendarCourseWorkContext")));
+
+            services.AddHangfireServer();
+
             services.AddTransient<JWTUser>();
-            services.AddTransient<UsersLogic>();
-            services.AddTransient<UsersStorage>();
+            services.AddTransient<UsersManager>();
+            services.AddTransient<UsersDataAccess>();
 
-            services.AddTransient<CategoriesLogic>();
-            services.AddTransient<CategoriesStorage>();
+            services.AddTransient<CategoriesManager>();
+            services.AddTransient<CategoriesDataAccess>();
 
-            services.AddTransient<EventsStorage>();
-            services.AddTransient<EventsLogic>();
+            services.AddTransient<EventsDataAccess>();
+            services.AddTransient<EventsManager>();
 
             services.AddTransient<JWTUser>();
 
@@ -117,6 +124,7 @@ namespace CalendarCourseWork
             nLogConfig.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Error, logConsole);
             LogManager.Configuration = nLogConfig;
 
+            app.UseHangfireDashboard();
             app.UseDeveloperExceptionPage();
             app.UseSwagger();
             app.UseSwaggerUI(c =>

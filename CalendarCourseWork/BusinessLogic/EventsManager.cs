@@ -1,10 +1,10 @@
-﻿namespace CalendarCourseWork.DataBase.Models
+﻿namespace CalendarCourseWork.BusinessLogic.Models
 {
-    public class EventsLogic
+    public class EventsManager
     {
-        private readonly EventsStorage _eventsStorage;
+        private readonly EventsDataAccess _eventsStorage;
 
-        public EventsLogic(EventsStorage eventsStorage)
+        public EventsManager(EventsDataAccess eventsStorage)
         {
             _eventsStorage = eventsStorage;
         }
@@ -38,5 +38,6 @@
         {
             return _eventsStorage.EventExists(id);
         }
+
     }
 }

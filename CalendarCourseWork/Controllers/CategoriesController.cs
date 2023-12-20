@@ -1,131 +1,136 @@
-﻿using CalendarCourseWork.DataBase.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using CalendarCourseWork.BusinessLogic.Models;
 using CalendarCourseWork.Logic;
 using CalendarCourseWork.Models;
-using CalendarCourseWork.Security;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CalendarCourseWork.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CategoriesController : ControllerBase
+    public class CategoriesController : Controller
     {
-        private readonly CategoriesLogic _categoriesLogic;
-        private readonly UsersLogic _usersLogic;
-        private readonly JWTUser _jwtUser;
+        private readonly CategoriesManager _categoriesLogic;
+        private readonly UsersManager _usersLogic;
 
-        public CategoriesController(CategoriesLogic categoriesLogic, UsersLogic usersLogic, JWTUser jwtUser)
+        public CategoriesController(CategoriesManager categoriesLogic, UsersManager usersLogic)
         {
             _categoriesLogic = categoriesLogic;
             _usersLogic = usersLogic;
-            _jwtUser = jwtUser;
         }
 
-        [Authorize]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategory()
+        // GET: Categories1
+        public async Task<IActionResult> Index(int userId)
         {
-            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+            var result = _categoriesLogic.GetCategoriesAsync(userId);
 
-            int userId = user.Id;
+            ViewBag.userId = userId;
 
-            return await _categoriesLogic.GetCategoriesAsync(userId);
+            return View(await result);
         }
 
-        [Authorize]
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryOutputModel>> GetCategory(int id)
+        // GET: Categories/Create
+        public IActionResult Create(int userId)
         {
-            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
+            var model = new CategoryInputModel
+            {
+                UserId = userId
+            };
 
-            int userId = user.Id;
+            return View(model);
+        }
 
+        // POST: Categories/Create
+        [HttpPost]
+        public async Task<IActionResult> Create(int userId, CategoryInputModel categoryInputModel)
+        {
+            if (ModelState.IsValid)
+            {
+                Category category = new()
+                {
+                    EmailSend = categoryInputModel.EmailSend,
+                    Header = categoryInputModel.Header,
+                    UserId = userId
+                };
+
+                await _categoriesLogic.CreateCategoryAsync(category);
+
+                return RedirectToAction(nameof(Index), new { userId });
+            }
+            return View(categoryInputModel);
+        }
+
+        // GET: Categories1/Edit/5
+        public async Task<IActionResult> Edit(int id, int userId)
+        {
             Category category = await _categoriesLogic.GetCategoryByIdAsync(id, userId);
 
-            CategoryOutputModel outputModel = new()
-            {
-                EmailSend = category.EmailSend,
-                Header = category.Header,
-                UserId = userId,
-                Id = userId,
-            };
-
-            if (outputModel == null)
-            {
-                return NotFound();
-            }
-
-            return outputModel;
+            return View(category);
         }
 
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategory(int id, CategoryInputModel categoryInputModel)
-        {
-            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
-
-            Category category = new()
-            {
-                EmailSend = categoryInputModel.EmailSend,
-                Header = categoryInputModel.Header,
-                UserId = user.Id
-            };
-
-            bool result = await _categoriesLogic.UpdateCategoryAsync(id, category);
-
-            if (!result)
-            {
-                return BadRequest("Уже есть категория с таким именем");
-            }
-
-            return NoContent();
-        }
-
-        [Authorize]
+        // POST: Categories1/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        public async Task<ActionResult<Category>> PostCategory(CategoryInputModel categoryInputModel)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, CategoryInputModel categoryInputModel, int userId)
         {
-            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
-
-            if (user == null)
+            if (ModelState.IsValid)
             {
-                return Problem("Не удалось найти пользователя");
+                Category category = new()
+                {
+                    EmailSend = categoryInputModel.EmailSend,
+                    Header = categoryInputModel.Header,
+                    UserId = userId
+                };
+
+                bool result = await _categoriesLogic.UpdateCategoryAsync(id, category);
+
+                return RedirectToAction(nameof(Index));
             }
-
-            Category category = new()
-            {
-                EmailSend = categoryInputModel.EmailSend,
-                Header = categoryInputModel.Header,
-                UserId = user.Id
-            };
-
-            Category result = await _categoriesLogic.CreateCategoryAsync(category);
-
-            if (result == null)
-            {
-                return Problem("Не удалось добавить категорию, возможно уже есть категория с таким именем");
-            }
-
-            return CreatedAtAction("GetCategory", new { id = result.Id }, result);
+            return View(categoryInputModel);
         }
 
-        [Authorize]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        /*
+
+        // GET: Categories1/Delete/5
+        public async Task<IActionResult> Delete(int? id)
         {
-            User user = await _usersLogic.GetCurrentUserCreds(HttpContext, _jwtUser);
-
-            int userId = user.Id;
-
-            bool result = await _categoriesLogic.DeleteCategoryAsync(id, userId);
-
-            if (!result)
+            if (id == null || _context.Category == null)
             {
                 return NotFound();
             }
 
-            return NoContent();
+            var category = await _context.Category
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            return View(category);
         }
+
+        // POST: Categories1/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            if (_context.Category == null)
+            {
+                return Problem("Entity set 'CalendarCourseWorkContext.Category'  is null.");
+            }
+            var category = await _context.Category.FindAsync(id);
+            if (category != null)
+            {
+                _context.Category.Remove(category);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool CategoryExists(int id)
+        {
+            return (_context.Category?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+        */
     }
 }

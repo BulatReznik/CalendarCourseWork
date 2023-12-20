@@ -1,17 +1,21 @@
-﻿using CalendarCourseWork.DataBase.Models;
-using CalendarCourseWork.DataBase.Storages;
+﻿using CalendarCourseWork.BusinessLogic.Models;
+using CalendarCourseWork.BusinessLogic.Storages;
 using CalendarCourseWork.Models;
 using CalendarCourseWork.Security;
 using System.Security.Claims;
 
 namespace CalendarCourseWork.Logic
 {
-    public class UsersLogic
+    public class UsersManager
     {
-        private readonly UsersStorage _usersStorage;
+        private readonly UsersDataAccess _usersStorage;
 
+        public UsersManager()
+        {
 
-        public UsersLogic(UsersStorage usersStorage)
+        }
+
+        public UsersManager(UsersDataAccess usersStorage)
         {
             _usersStorage = usersStorage;
         }
@@ -51,13 +55,18 @@ namespace CalendarCourseWork.Logic
             return _usersStorage.UserExists(email);
         }
 
+        public async Task<User> GetUserByEmailAndPassword(string email, string password)
+        {
+            return await _usersStorage.GetUserByEmailAndPassword(email, password); 
+        }
+
         public async Task<User> ReadElement(User user)
         {
             User retrievedUser = new();
 
             if (user.Password != null)
             {
-                retrievedUser = _usersStorage.GetUserByEmailAndPassword(user.Email, user.Password);
+                retrievedUser = await _usersStorage.GetUserByEmailAndPassword(user.Email, user.Password);
             }
             else if (user.Id != null)
             {

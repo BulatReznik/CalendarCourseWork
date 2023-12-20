@@ -1,10 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using CalendarCourseWork.DataBase.Models;
+using CalendarCourseWork.BusinessLogic.Models;
 
-namespace CalendarCourseWork.DataBase
+namespace CalendarCourseWork.BusinessLogic
 {
     public class CalendarCourseWorkContext : DbContext
     {
+        public CalendarCourseWorkContext()
+        {
+        }
+
         public CalendarCourseWorkContext(DbContextOptions<CalendarCourseWorkContext> options)
             : base(options)
         {

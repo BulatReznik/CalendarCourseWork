@@ -1,24 +1,30 @@
-﻿using CalendarCourseWork.DataBase.Models;
+﻿using CalendarCourseWork.BusinessLogic.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CalendarCourseWork.DataBase.Storages
+namespace CalendarCourseWork.BusinessLogic.Storages
 {
-    public class CategoriesStorage
+    public class CategoriesDataAccess
     {
         private readonly CalendarCourseWorkContext _context;
 
-        public CategoriesStorage(CalendarCourseWorkContext context)
+        public CategoriesDataAccess()
+        {
+
+        }
+
+        public CategoriesDataAccess(CalendarCourseWorkContext context)
         {
             _context = context;
         }
 
-        public async Task<List<Category>> GetCategoriesAsync(int userId)
+        public virtual async Task<List<Category>> GetCategoriesAsync(int userId)
         {
             if (_context.Category == null)
             {
                 return new List<Category>();
             }
 
+            // Используйте ToListAsync для поддержки асинхронных операций
             List<Category> userCategories = await _context.Category
                 .Where(category => category.UserId == userId)
                 .ToListAsync();
@@ -26,7 +32,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return userCategories;
         }
 
-        public async Task<Category> GetCategoryByIdAsync(int id, int userId)
+        public virtual async Task<Category> GetCategoryByIdAsync(int id, int userId)
         {
             if (_context.Category == null)
             {
@@ -44,7 +50,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return null; // Категория не найдена или не принадлежит указанному пользователю
         }
 
-        public async Task<bool> UpdateCategoryAsync(int id, Category category)
+        public virtual async Task<bool> UpdateCategoryAsync(int id, Category category)
         {
             if (id != category.Id)
             {
@@ -97,7 +103,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return true; // Категория успешно удалена
         }
 
-        public bool CategoryExists(int userId, string header)
+        public virtual bool CategoryExists(int userId, string header)
         {
             return (_context.Category?.Any(e => e.UserId == userId && e.Header == header)).GetValueOrDefault();
         }

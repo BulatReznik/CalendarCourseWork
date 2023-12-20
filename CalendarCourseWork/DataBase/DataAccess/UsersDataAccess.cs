@@ -1,19 +1,24 @@
-﻿using CalendarCourseWork.DataBase.Models;
+﻿using CalendarCourseWork.BusinessLogic.Models;
 using CalendarCourseWork.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CalendarCourseWork.DataBase.Storages
+namespace CalendarCourseWork.BusinessLogic.Storages
 {
-    public class UsersStorage
+    public class UsersDataAccess
     {
         private readonly CalendarCourseWorkContext _context;
 
-        public UsersStorage(CalendarCourseWorkContext context)
+        public UsersDataAccess()
+        {
+
+        }
+
+        public UsersDataAccess(CalendarCourseWorkContext context)
         {
             _context = context;
         }
 
-        public async Task<List<User>> GetUsersAsync()
+        public virtual async Task<List<User>> GetUsersAsync()
         {
             if (_context.User == null)
             {
@@ -23,7 +28,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return await _context.User.ToListAsync();
         }
 
-        public async Task<User> GetUserByIdAsync(int id)
+        public virtual async Task<User> GetUserByIdAsync(int id)
         {
             if (_context.User == null)
             {
@@ -33,7 +38,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return await _context.User.FindAsync(id);
         }
 
-        public async Task<bool> UpdateUserAsync(int id, UserInputModel userInputModel)
+        public virtual async Task<bool> UpdateUserAsync(int id, UserInputModel userInputModel)
         {
             User user = await GetUserByIdAsync(id);
 
@@ -47,7 +52,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return true;
         }
 
-        public async Task<User> CreateUserAsync(User user)
+        public  virtual async Task<User> CreateUserAsync(User user)
         {
             if (_context.User == null)
             {
@@ -60,7 +65,7 @@ namespace CalendarCourseWork.DataBase.Storages
             return user;
         }
 
-        public async Task<bool> DeleteUserAsync(int id)
+        public virtual async Task<bool> DeleteUserAsync(int id)
         {
             if (_context.User == null)
             {
@@ -79,17 +84,18 @@ namespace CalendarCourseWork.DataBase.Storages
             return true;
         }
 
-        public bool UserExists(string email)
+        public virtual bool UserExists(string email)
         {
             return (_context.User?.Any(e => e.Email == email)).GetValueOrDefault();
         }
 
-        public User GetUserByEmailAndPassword(string email, string password)
+        public virtual async Task<User> GetUserByEmailAndPassword(string email, string password)
         {
-            User user = _context.User.
+            User user = await _context.User.
                 Include(rec => rec.Categories).
                     ThenInclude(rec => rec.Events).
-                FirstOrDefault(u => u.Email == email && u.Password == password);
+                FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
+
             return user;
         }
     }

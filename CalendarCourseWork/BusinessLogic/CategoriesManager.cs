@@ -1,13 +1,13 @@
-﻿using CalendarCourseWork.DataBase.Models;
-using CalendarCourseWork.DataBase.Storages;
+﻿using CalendarCourseWork.BusinessLogic.Models;
+using CalendarCourseWork.BusinessLogic.Storages;
 
 namespace CalendarCourseWork.Logic
 {
-    public class CategoriesLogic
+    public class CategoriesManager
     {
-        private readonly CategoriesStorage _categoriesStorage;
+        private readonly CategoriesDataAccess _categoriesStorage;
 
-        public CategoriesLogic(CategoriesStorage categoriesStorage)
+        public CategoriesManager(CategoriesDataAccess categoriesStorage)
         {
             _categoriesStorage = categoriesStorage;
         }

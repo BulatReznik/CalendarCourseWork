@@ -1,0 +1,290 @@
+﻿@page
+@using CalendarCourseWork.BusinessLogic.Models;
+@using System.Globalization;
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Календарь</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: -webkit-gradient(linear, left bottom, right top, from(#fc2c77), to(#6c4079));
+            background: -webkit-linear-gradient(bottom left, #fc2c77 0%, #6c4079 100%);
+            background: -moz-linear-gradient(bottom left, #fc2c77 0%, #6c4079 100%);
+            background: -o-linear-gradient(bottom left, #fc2c77 0%, #6c4079 100%);
+            background: linear-gradient(to top right, #fc2c77 0%, #6c4079 100%);
+            color: #fff;
+        }
+
+        .container-xxl {
+            max-width: none; /* Отменяем максимальную ширину контейнера */
+            padding: 0; /* Убираем отступы внутри контейнера */
+        }
+
+        .card {
+            background-color: #DEE2E6;
+            color: black;
+            margin-bottom: 10px;
+            margin-left: 10px;
+            height: 254px; /* Фиксированная высота карточки */
+            width: 191px;
+        }
+
+        .card-body {
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .btn {
+            background-color: #7749F8;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .events {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* Стили для кнопок переключения режимов */
+        .switch-btn {
+            width: 70px;
+            margin: 0 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container-xxl">
+
+        <div class="row" style="margin-left: 191px">
+            <!-- Кнопка "День" -->
+            <div class="btn-group" style="margin-left:10px">
+                @{
+                    var daystart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
+                    var datstop = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 23, 59, 59);
+                }
+
+                <a class="btn btn-primary" href="@Url.Action("Index", "Events", new { userId =  ViewBag.CalendarViewModel.UserId, dateTimeFrom = daystart, dateTimeTo = datstop})">
+                    День
+                </a>
+            </div>
+
+            <!-- Кнопка "Месяц" (с подсветкой) -->
+            <div class="btn-group">
+                <button class="btn btn-primary active" disabled>Месяц</button>
+            </div>
+
+            <!-- Кнопка "Год" -->
+            <div class="btn-group">
+                <a class="btn btn-primary" href="@Url.Action("Year", "Calendar", new { year = ViewBag.CalendarViewModel.FirstDayOfMonth.Year, month = ViewBag.CalendarViewModel.FirstDayOfMonth.Month, userId = ViewBag.CalendarViewModel.UserId })">
+                    Год
+                </a>
+            </div>
+
+        </div>
+
+        <div class="row" style="margin-left: 191px">
+            <div class="card" style="max-height: 70px; margin-left:0px">
+                <div class="card-body" style="font-size: 24px; font-weight: bold">
+                    @ViewBag.CalendarViewModel.FirstDayOfMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)
+                </div>
+            </div>
+
+            <div class="card" style="max-height: 70px">
+                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
+                    <a class="btn btn-primary" href="@Url.Action("MonthWithEvents", "Calendar", new { year = ViewBag.CalendarViewModel.FirstDayOfMonth.AddMonths(-1).Year, month = ViewBag.CalendarViewModel.FirstDayOfMonth.AddMonths(-1).Month, userId = ViewBag.CalendarViewModel.UserId })">
+                        Предыдущий месяц
+                    </a>
+                </div>
+            </div>
+
+            <div class="card" style="max-height: 70px">
+                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
+                    <a class="btn btn-primary" href="@Url.Action("MonthWithEvents", "Calendar", new { year = ViewBag.CalendarViewModel.FirstDayOfMonth.AddMonths(1).Year, month = ViewBag.CalendarViewModel.FirstDayOfMonth.AddMonths(1).Month, userId = ViewBag.CalendarViewModel.UserId })">
+                        Следующий месяц
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-left: 181px">
+            <div class="card" style="max-height: 70px">
+                <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
+                    <a class="btn btn-primary" href="@Url.Action("Index", "Categories", new { userId = ViewBag.CalendarViewModel.UserId })">
+                        Посмотреть категории
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-left: 191px">
+            @for (int day = 1; day <= 7; day++)
+            {
+                <div class="card" style="margin-left: @(day == 1 ? 0 : 10)px; max-height: 70px">
+                    <div class="card-body" style="font-size: 26px; font-weight: bold">
+                        @ViewBag.CalendarViewModel.FirstDayOfMonth.AddDays(day - (int)ViewBag.CalendarViewModel.FirstDayOfMonth.DayOfWeek).ToString("dddd")
+                    </div>
+                </div>
+            }
+        </div>
+
+        @{
+            int week = 0;
+
+            int lastweek = 6;
+
+            if ((int)ViewBag.CalendarViewModel.FirstDayOfMonth.DayOfWeek == 0)
+            {
+                week = -1;
+
+                if (DateTime.DaysInMonth(ViewBag.CalendarViewModel.FirstDayOfMonth.Year, ViewBag.CalendarViewModel.FirstDayOfMonth.Month) < 30)
+                {
+                    lastweek = 5;
+                }
+            }
+        }
+
+        @for (int w = week; w < lastweek; w++)
+        {
+            <div class="row" style="margin-left: 191px">
+                @for (int day = 1; day <= 7; day++)
+                {
+                    <div class="card" style="margin-left: @(day == 1 ? 0 : 10)px;">
+                        <div class="card-body">
+                            @if (@ViewBag.CalendarViewModel != null)
+                            {
+                                var currentDay = @ViewBag.CalendarViewModel.FirstDayOfMonth.AddDays(w * 7 + day - (int)@ViewBag.CalendarViewModel.FirstDayOfMonth.DayOfWeek);
+
+                                if (currentDay.Month == @ViewBag.CalendarViewModel.FirstDayOfMonth.Month)
+                                {
+                                    if (currentDay.Day != DateTime.Now.Day)
+                                    {
+                                        <div class="day">
+                                            @currentDay.Day
+                                        </div>
+
+                                        <div class="events" style="height: 100px">
+                                            @if (ViewBag.CalendarViewModel != null && ViewBag.CalendarViewModel.Events != null)
+                                            {
+                                                var filteredEvents = ((List<Event>)ViewBag.CalendarViewModel.Events);
+                                                if (filteredEvents != null)
+                                                {
+                                                    var newList = filteredEvents.Where(rec => rec.EventTime.Day == currentDay.Day).Take(3);
+
+                                                    foreach (var eventItem in newList)
+                                                    {
+                                                        <div class="events">@($"{eventItem.EventTime.Hour:D2}:{eventItem.EventTime.Minute:D2}: {eventItem.EventName}")</div>
+                                                    }
+                                                }
+                                            }
+                                        </div>
+
+                                        <div class="events">
+                                        </div>
+                                        <div class="btn-group" role="group" style="margin-top: 10px;">
+                                            <a class="btn btn-primary" href="@Url.Action("Create", "Events", new { userId = ViewBag.CalendarViewModel.UserId, year = currentDay.Year, month = currentDay.Month, day =  currentDay.Day})">
+                                                Добавать
+                                            </a>
+                                        </div>
+                                        <div class="btn-group" role="group" style="margin-top: 10px;">
+                                            @{
+                                                var dateTimeFrom = new DateTime(currentDay.Year, currentDay.Month, currentDay.Day, 0, 0, 0);
+                                                var dateTimeTo = new DateTime(currentDay.Year, currentDay.Month, currentDay.Day, 23, 59, 59);
+                                            }
+
+                                            <a class="btn btn-primary" href="@Url.Action("Index", "Events", new { userId =  ViewBag.CalendarViewModel.UserId, dateTimeFrom = dateTimeFrom, dateTimeTo = dateTimeTo})">
+                                                Посмотреть все
+                                            </a>
+                                        </div>
+                                    }
+                                    else if (currentDay.Day == DateTime.Now.Day && currentDay.Month == DateTime.Now.Month)
+                                    {
+                                        <div class="day" style="background-color: #3B5998;">
+                                            @currentDay.Day
+                                        </div>
+                                        <div class="events" style="height: 100px">
+                                            @if (ViewBag.CalendarViewModel != null && ViewBag.CalendarViewModel.Events != null)
+                                            {
+                                                var filteredEvents = ((List<Event>)ViewBag.CalendarViewModel.Events);
+                                                if (filteredEvents != null)
+                                                {
+                                                    var newList = filteredEvents.Where(rec => rec.EventTime.Day == currentDay.Day);
+
+                                                    foreach (var eventItem in newList)
+                                                    {
+                                                        <div class="events">@($"{eventItem.EventTime.Hour:D2}:{eventItem.EventTime.Minute:D2}: {eventItem.EventName}")</div>
+                                                    }
+                                                }
+                                            }
+                                        </div>
+                                        <div class="btn-group" role="group" style="margin-top: 10px;">
+                                            <a class="btn btn-primary" href="@Url.Action("Create", "Events", new { userId = ViewBag.CalendarViewModel.UserId, year = currentDay.Year, month = currentDay.Month, day =  currentDay.Day})">
+                                                Добавать
+                                            </a>
+                                        </div>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-info">Посмотреть все</button>
+                                        </div>
+                                    }
+                                    else if (currentDay.Day == DateTime.Now.Day && currentDay.Month != DateTime.Now.Month)
+                                    {
+                                        <div class="day">
+                                            @currentDay.Day
+                                        </div>
+
+                                        <div class="events" style="height: 100px">
+                                            @if (ViewBag.CalendarViewModel != null && ViewBag.CalendarViewModel.Events != null)
+                                            {
+                                                var filteredEvents = ((List<Event>)ViewBag.CalendarViewModel.Events);
+                                                if (filteredEvents != null)
+                                                {
+                                                    var newList = filteredEvents.Where(rec => rec.EventTime.Day == currentDay.Day).Take(3);
+
+                                                    foreach (var eventItem in newList)
+                                                    {
+                                                        <div class="events">@($"{eventItem.EventTime.Hour:D2}:{eventItem.EventTime.Minute:D2}: {eventItem.EventName}")</div>
+                                                    }
+                                                }
+                                            }
+                                        </div>
+
+                                        <div class="events">
+                                        </div>
+                                        <div class="btn-group" role="group" style="margin-top: 10px;">
+                                            <a class="btn btn-primary" href="@Url.Action("Create", "Events", new { userId = ViewBag.CalendarViewModel.UserId, year = currentDay.Year, month = currentDay.Month, day =  currentDay.Day})">
+                                                Добавать
+                                            </a>
+                                        </div>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-info">Посмотреть все</button>
+                                        </div>
+                                    }
+                                }
+                            }
+
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

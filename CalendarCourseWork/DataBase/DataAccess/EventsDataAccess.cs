@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace CalendarCourseWork.DataBase.Models
+namespace CalendarCourseWork.BusinessLogic.Models
 {
-    public class EventsStorage
+    public class EventsDataAccess
     {
         private readonly CalendarCourseWorkContext _context;
 
-        public EventsStorage(CalendarCourseWorkContext context)
+        public EventsDataAccess(CalendarCourseWorkContext context)
         {
             _context = context;
         }
